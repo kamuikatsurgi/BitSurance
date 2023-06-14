@@ -1,0 +1,20 @@
+.dashboard {
+  min-height: 100vh;
+}
+.vault-form {
+  width: 100%;
+  max-width: 400px;
+}
+.custom-btn {
+  background-color: white !important;
+  color: black !important;
+}
+.custom-btn:hover,
+.custom-btn:focus,
+.custom-btn:active,
+.custom-btn.active,
+.custom-btn.focus {
+  background-color: white !important;
+  color: black !important;
+  box-shadow: none !important;
+}

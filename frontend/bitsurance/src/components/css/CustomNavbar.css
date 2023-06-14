@@ -1,0 +1,45 @@
+.custom-navbar {
+  background-color: transparent;
+  padding: 20px;
+}
+
+.navbar-brand {
+  color: #fff;
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.nav-btn {
+  color: #fff;
+  margin-right: 10px;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  transition: none;
+}
+
+.connect-btn {
+  background-color: #fff;
+  color: #000;
+  border-radius: 3%;
+  border: none;
+  outline: none;
+  font-size: 18px;
+}
+
+.connect-btn:hover,
+.connect-btn:focus,
+.connect-btn:active,
+.connect-btn.active,
+.connect-btn.focus {
+  background-color: #fff !important;
+  color: #000 !important;
+  border-color: #fff !important;
+  outline: none;
+}
+
+.metamask-logo {
+  height: 24px;
+  width: 24px;
+  margin-right: 8px;
+}
