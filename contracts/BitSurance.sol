@@ -54,7 +54,7 @@ contract Vault {
      */
     function claimFunds(address payable recipient, uint256 _tokenID) external payable onlyBitsurance {
         require(tokenBalances[_tokenID] > 0, "No balance for this tokenID");
-        require(block.timestamp - creationTime >= minimumWithdrawTime * 2, "Cannot access function before the minimum time has passed");
+        require(block.timestamp - creationTime >= minimumWithdrawTime, "Cannot access function before the minimum time has passed");
         uint256 amount = tokenBalances[_tokenID];
         tokenBalances[_tokenID] = 0;
         recipient.transfer(amount);
@@ -66,7 +66,7 @@ contract Vault {
      * @param _tokenIDs Array of Token IDs to withdraw
      */
     function withdraw(address payable recipient, uint256[] memory _tokenIDs) external payable onlyBitsurance {
-        require(block.timestamp - creationTime >= minimumWithdrawTime, "Cannot access function before the minimum time has passed");
+        require(block.timestamp - creationTime >= minimumWithdrawTime * 2, "Cannot access function before the minimum time has passed");
         uint256 totalAmount = 0;
         for (uint256 i = 0; i < _tokenIDs.length; i++) {
             require(tokenBalances[_tokenIDs[i]] > 0, "No balance for this tokenID");
