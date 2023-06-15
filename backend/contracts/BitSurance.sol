@@ -152,7 +152,7 @@ contract Bitsurance {
      * @param NFTContractAddress address of the NFT contract
      * @param _tokenID Token ID to claim
      */
-    function claimToken(address NFTContractAddress, uint _tokenID) public payable {
+    function claim(address NFTContractAddress, uint256 _tokenID) public payable {
         require(vaultAddress[NFTContractAddress] != address(0), "Vault does not exists for this NFT contract");
 
         ERC721 token = ERC721(NFTContractAddress);

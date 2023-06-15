@@ -6,7 +6,6 @@ import reportWebVitals from './reportWebVitals';
 import Homepage from './components/Homepage';
 import Claim from './components/Claim';
 import Dashboard from './components/Dashboard';
-import 'bootstrap/dist/css/bootstrap.min.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
