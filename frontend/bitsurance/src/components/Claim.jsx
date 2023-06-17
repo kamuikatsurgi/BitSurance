@@ -1,5 +1,6 @@
 import React, { useContext }from 'react';
 import { Container, Form, Button, Row, Col, Navbar, Nav } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 const Claim = () => {
     return (
@@ -8,8 +9,8 @@ const Claim = () => {
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
                     <Nav className="ms-auto">
-                        <div className="btn animated-button">Home</div>
-                        <div className="btn animated-button">NFT Collection Owners</div>
+                        <Link to={'/'} className="btn animated-button">Home</Link>
+                        <Link to={'/dashboard'} className="btn animated-button">NFT Collection Owners</Link>
                     </Nav>
                 </Navbar.Collapse>
             </Navbar>

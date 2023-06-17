@@ -5,6 +5,7 @@ import Image1 from './Images/Image1.jpg';
 import Image2 from './Images/Image2.jpg'; 
 import Image3 from './Images/Image3.jpg'; 
 import './css/HomePage.css';
+import { Link } from 'react-router-dom';
 
 const Homepage = () => {
     return (
@@ -13,8 +14,8 @@ const Homepage = () => {
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
                     <Nav className="ms-auto">
-                        <div className="btn animated-button">NFT Users</div>
-                        <div className="btn animated-button">NFT Collection Owners</div>
+                        <Link to={'/claim'} className="btn animated-button">NFT Users</Link>
+                        <Link to={'/dashboard'} className="btn animated-button">NFT Collection Owners</Link>
                     </Nav>
                 </Navbar.Collapse>
             </Navbar>
