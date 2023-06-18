@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from 'react-bootstrap';
 import CustomNavbar from './Navbar.jsx';
 import VaultForm from './CreateVault.jsx';
@@ -8,7 +8,7 @@ import Vaults from './Vaults.jsx';
 import './css/Dashboard.css';
 
 const Dashboard = () => {
-  const [selectedOption, setSelectedOption] = useState(null);
+  const [selectedOption, setSelectedOption] = useState("createVault");
 
   const [vaults, setVaults] = React.useState([
     {

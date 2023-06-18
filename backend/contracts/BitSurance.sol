@@ -16,6 +16,9 @@ contract Vault {
     address public bitsurance;
     address public admin;
 
+    // array to store all insured token ids
+    uint256[] public tokenIds;
+
     modifier onlyBitsurance{
         require(msg.sender == bitsurance, "Only Bitsurance contract can call this function");
         _;
@@ -44,7 +47,14 @@ contract Vault {
      * @param amount Amount to add to the balance
      */
     function addBalance(uint256 _tokenID, uint256 amount) external onlyBitsurance {
-        tokenBalances[_tokenID] = tokenBalances[_tokenID] + amount;
+        if (tokenBalances[_tokenID] == 0) {
+            tokenIds.push(_tokenID);
+        }
+        tokenBalances[_tokenID] += amount;
+    }
+
+    function getTokenIds() public view returns(uint256[] memory) {
+        return tokenIds;
     }
 
     /**
@@ -179,5 +189,25 @@ contract Bitsurance {
      */
     function getContractAddress(address NFTContractAddress) public view returns(address){
         return vaultAddress[NFTContractAddress];
+    }
+
+    /**
+     * @dev Function to get details of the vault associated with the caller
+     * @return A tuple containing the total balance of the vault, minimum time before withdraw, 
+     * array of token ids insured, and the associated NFT contract address
+     */
+    function getMyVaultDetails() public view returns (uint256, uint256, uint256[] memory, address) {
+        address nftContractAddress = admins[msg.sender];
+        require(nftContractAddress != address(0), "No NFT contract associated with caller");
+
+        address vaultContractAddress = vaultAddress[nftContractAddress];
+        require(vaultContractAddress != address(0), "No vault associated with caller's NFT contract");
+
+        Vault vault = Vault(payable(vaultContractAddress));
+        uint256 totalBalance = address(vault).balance;
+        uint256 minimumWithdrawTime = vault.minimumWithdrawTime();
+        uint256[] memory insuredTokenIds = vault.getTokenIds();
+
+        return (totalBalance, minimumWithdrawTime, insuredTokenIds, nftContractAddress);
     }
 }
