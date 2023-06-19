@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "hardhat/console.sol";
 
 /**
  * @title Vault
@@ -11,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 contract Vault {
     address public NFTContract;
     mapping(uint256 => uint256) public tokenBalances;
-    uint256 public minimumWithdrawTime;
+    uint256 public minTime;
     uint256 public creationTime;
     address public bitsurance;
     address public admin;
@@ -27,12 +28,12 @@ contract Vault {
     /**
      * @dev Contract constructor that sets initial values
      * @param NFTContractAddress address of the NFT contract
-     * @param minTime minimum time before withdraw
+     * @param _minTime minimum time before claim and 2 * minTime before withdraw
      * @param _admin admin address
      */
-    constructor(address NFTContractAddress, uint256 minTime, address _admin) {
+    constructor(address NFTContractAddress, uint256 _minTime, address _admin) {
         NFTContract = NFTContractAddress;
-        minimumWithdrawTime = minTime;
+        minTime = _minTime;
         admin = _admin;
         creationTime = block.timestamp;
         bitsurance = msg.sender;
@@ -64,7 +65,7 @@ contract Vault {
      */
     function claimFunds(address payable recipient, uint256 _tokenID) external payable onlyBitsurance {
         require(tokenBalances[_tokenID] > 0, "No balance for this tokenID");
-        require(block.timestamp - creationTime >= minimumWithdrawTime, "Cannot access function before the minimum time has passed");
+        require(block.timestamp - creationTime >= minTime, "Cannot access function before the minimum time has passed");
         uint256 amount = tokenBalances[_tokenID];
         tokenBalances[_tokenID] = 0;
         recipient.transfer(amount);
@@ -76,7 +77,7 @@ contract Vault {
      * @param _tokenIDs Array of Token IDs to withdraw
      */
     function withdraw(address payable recipient, uint256[] memory _tokenIDs) external payable onlyBitsurance {
-        require(block.timestamp - creationTime >= minimumWithdrawTime * 2, "Cannot access function before the minimum time has passed");
+        require(block.timestamp - creationTime >= 2 * minTime, "Cannot access function before the minimum time has passed");
         uint256 totalAmount = 0;
         for (uint256 i = 0; i < _tokenIDs.length; i++) {
             require(tokenBalances[_tokenIDs[i]] > 0, "No balance for this tokenID");
@@ -92,6 +93,13 @@ contract Vault {
  */
 contract Bitsurance {
 
+    struct VaultDetails {
+        uint256 totalBalance;
+        uint256 minimumWithdrawTime;
+        uint256[] insuredTokenIds;
+        address nftContractAddress;
+    }
+    
     // An array of vaults
     Vault[] private vaults;
     
@@ -102,7 +110,7 @@ contract Bitsurance {
     mapping(address => address) public vaultAddress;
     
     // Mapping of admins to NFT contracts
-    mapping(address => address) public admins;
+    mapping(address => address[]) public adminToNFTContracts;
 
     /**
      * @dev Function to create a new vault
@@ -114,7 +122,7 @@ contract Bitsurance {
         Vault vault = new Vault(_NFTContractAddress,_minTime, msg.sender);
         vaults.push(vault);
         vaultAddress[_NFTContractAddress]= address(vault);
-        admins[msg.sender] = _NFTContractAddress;
+        adminToNFTContracts[msg.sender].push(_NFTContractAddress);
         emit VaultCreated(block.timestamp,address(vault),_NFTContractAddress);
     }
 
@@ -126,13 +134,15 @@ contract Bitsurance {
      */
     function depositFunds(address NFTContractAddress, uint256[] memory _tokenIDs, uint256[] memory amounts) public payable{
         require(vaultAddress[NFTContractAddress] != address(0), "Vault does not exists for this NFT contract");
-
+        require(_tokenIDs.length == amounts.length, "Mismatched arrays");
+        
         uint256 useramount = msg.value;
         address payable vaultContract_address = payable(getContractAddress(NFTContractAddress));
-        require(_tokenIDs.length == amounts.length, "Mismatched arrays");
-        uint256 totalAmount = 0;
+
         Vault vault = Vault(vaultContract_address);
         require(vault.admin() == msg.sender, "Only the person who created vault can deposit funds into it");
+
+        uint256 totalAmount = 0;        
         for (uint256 i = 0; i < _tokenIDs.length; i++) {
             totalAmount += amounts[i];
         }
@@ -154,6 +164,7 @@ contract Bitsurance {
         address payable vaultContract_address = payable(getContractAddress(NFTContractAddress));
         Vault vault = Vault(vaultContract_address);
         require(vault.admin() == msg.sender, "Only the person who created vault can withdraw funds");
+
         vault.withdraw(payable(msg.sender), tokenIDs);
     }
 
@@ -165,14 +176,13 @@ contract Bitsurance {
     function claim(address NFTContractAddress, uint256 _tokenID) public payable {
         require(vaultAddress[NFTContractAddress] != address(0), "Vault does not exists for this NFT contract");
 
-        ERC721 token = ERC721(NFTContractAddress);
         ERC721Burnable asset = ERC721Burnable(NFTContractAddress);
 
         address payable vaultContract_address = payable(getContractAddress(NFTContractAddress));
-        address tokenOwner = token.ownerOf(_tokenID);
+        address tokenOwner = asset.ownerOf(_tokenID);
         
         require(tokenOwner == msg.sender, "You are not the owner of this token!");
-        require(token.getApproved(_tokenID) == address(this), "Contract not approved to burn token");
+        require(asset.getApproved(_tokenID) == address(this), "Contract not approved to burn token");
 
         asset.burn(_tokenID);
 
@@ -192,22 +202,25 @@ contract Bitsurance {
     }
 
     /**
-     * @dev Function to get details of the vault associated with the caller
-     * @return A tuple containing the total balance of the vault, minimum time before withdraw, 
+     * @dev Function to get details of all vaults associated with the caller
+     * @return An array of structures containing the total balance of each vault, minimum time before withdraw, 
      * array of token ids insured, and the associated NFT contract address
      */
-    function getMyVaultDetails() public view returns (uint256, uint256, uint256[] memory, address) {
-        address nftContractAddress = admins[msg.sender];
-        require(nftContractAddress != address(0), "No NFT contract associated with caller");
+    function getVaultDetails() public view returns (VaultDetails[] memory) {
+        address[] memory nftContracts = adminToNFTContracts[msg.sender];
+        VaultDetails[] memory vaultDetailArray = new VaultDetails[](nftContracts.length);
 
-        address vaultContractAddress = vaultAddress[nftContractAddress];
-        require(vaultContractAddress != address(0), "No vault associated with caller's NFT contract");
-
-        Vault vault = Vault(payable(vaultContractAddress));
-        uint256 totalBalance = address(vault).balance;
-        uint256 minimumWithdrawTime = vault.minimumWithdrawTime();
-        uint256[] memory insuredTokenIds = vault.getTokenIds();
-
-        return (totalBalance, minimumWithdrawTime, insuredTokenIds, nftContractAddress);
+        for (uint i = 0; i < nftContracts.length; i++) {
+            Vault vault = Vault(payable(vaultAddress[nftContracts[i]]));
+            uint256[] memory insuredTokenIds = vault.getTokenIds();
+            VaultDetails memory vaultDetails = VaultDetails({
+                totalBalance: address(vault).balance,
+                minimumWithdrawTime: 2 * vault.minTime(),
+                insuredTokenIds: insuredTokenIds,
+                nftContractAddress: nftContracts[i]
+            });
+            vaultDetailArray[i] = vaultDetails;
+        }
+        return vaultDetailArray;
     }
 }

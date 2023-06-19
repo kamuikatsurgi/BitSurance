@@ -7,16 +7,19 @@ const { ethers } = require("ethers");
 const VaultForm = () => {
 
   const ethprovider = new ethers.BrowserProvider(window.ethereum);
+  const [loading, setLoading] = useState(false);
   const [signer, setSigner] = useState();
   const [contractAddr, setContractAddr] = useState("");
   const [inpDate, setDate] = useState(new Date());
-  const bitContract = new ethers.Contract(ethers.getAddress("0x7c02E17940Ee7e316553f8496b70B00052564962"), abi.abi, signer);
+  const bitContract = new ethers.Contract(ethers.getAddress("0x48d04242a1eE506489cBeb5847C770001CF86adD"), abi.abi, signer);
 
   const handleSubmit = async () => {
 
+    setLoading(true);
+
     let currDate = new Date();
     let newDate = new Date(inpDate);
-    console.log(Math.floor((newDate.getTime() - currDate.getTime())/1000));
+    console.log(currDate.getTime());
 
     try{
       if(ethers.getAddress(contractAddr)) {
@@ -26,15 +29,18 @@ const VaultForm = () => {
             const tx = await bitContract.createVault(ethers.getAddress(contractAddr), Math.floor((newDate.getTime() - currDate.getTime())/1000));
             await tx.wait();
             console.log(tx);
+            alert("Tx Successfull, Vault Created Successfully!");
+            setLoading(false);
           }
         } else {
           alert("Please enter a valid date!");
+          setLoading(false);
         }
       } 
     } catch (error) {
       alert(`"${contractAddr}" is not a valid address, make sure to enter correct wallet addresses`);
+      setLoading(false);
     }
-    console.log(contractAddr, newDate);
   };
 
   useEffect(() => {
@@ -55,7 +61,7 @@ const VaultForm = () => {
         <Form.Control onChange={(e) => setDate(e.target.value)} type="datetime-local" className="form-control-sm"/>
       </Form.Group>
       <Button onClick={handleSubmit} variant="light" className="custom-btn w-100 mt-3">
-        Create Vault
+        { loading ? "Loading.." :  "Create Vault" }
       </Button>
     </Form>
   );
