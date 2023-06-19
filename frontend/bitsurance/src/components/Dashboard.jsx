@@ -29,9 +29,9 @@ const Dashboard = () => {
       case 'createVault':
         return <VaultForm />;
       case 'deposit':
-        return <DepositForm />;
+        return <DepositForm signer={signer}/>;
       case 'withdraw':
-        return <WithdrawForm />;
+        return <WithdrawForm signer={signer}/>;
       case 'vaults':
         return <Vaults signer={signer}/>;
       default:

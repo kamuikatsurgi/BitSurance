@@ -17,20 +17,25 @@ const Vaults = ({signer}) => {
       var i = 0;
       var temp_vaults = [];
       while(i < res.length) {
-        console.log(res[i]);
 
-        console.log(Number(res[i][1]))
-        console.log(currDate.getTime());
         let temp_unix = Math.ceil((currDate.getTime() / 1000) + Number(res[i][1]));
+
+        var token_ids = [];
+        for(const j in res[i][2]){
+          token_ids.push(j);
+        };
+
+        if(token_ids.length == 0){
+          token_ids = ["None"];
+        }
 
         let v = {
           contractAddress: res[i][3],
-          totalFunds: res[i][0],
-          tokenIds: res[i][2],
+          totalFunds: Number(res[i][0]) / 10**8,
+          tokenIds: token_ids,
           minWithdrawTime: new Date(temp_unix * 1000).toLocaleDateString("default")
         }
 
-        console.log(typeof(v.tokenIds));
         temp_vaults.push(v);
         i = i + 1;
       }
@@ -73,7 +78,7 @@ const Vaults = ({signer}) => {
                 </Card.Text>
                 <Card.Text>
                   <strong>Token IDs: </strong>
-                  {vault.tokenIds}
+                  {vault.tokenIds.join(', ')}
                 </Card.Text>
               </Card.Body>
             </Card>
