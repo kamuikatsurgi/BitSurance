@@ -1,6 +1,7 @@
 # Bitsurance
 
 An Encode X ICP Hack Project. 
+Bitfinity Bounty: Best use of Solidity
 
 ### Why BitSurance?
 Bitsurance serves as a decentralized solution to insure the value of your NFTs. 
